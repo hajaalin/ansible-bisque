@@ -1,0 +1,41 @@
+---
+  - name: install dependencies
+    apt: name={{ item }} state=present update_cache=yes
+    with_items:
+      - nginx
+      - nginx-extras
+      - nginx-full
+      - npm
+      - python-dev
+      - python-setuptools
+      - python-pip
+#      - python-psycopg2
+      - python-libxml2
+      - python-numpy
+      - libxml2-dev
+      - libxslt-dev
+      - libldap2-dev
+      - libsasl2-dev
+      - yasm
+      - libxvidcore-dev
+      - libopenjpeg-dev
+      - libschroedinger-dev
+      - libtheora-dev
+      - libbz2-dev
+      - libfftw3-dev
+      - libvpx-dev
+      - libx264-dev
+      - libsvm-tools
+      - libpq-dev
+      - qt4-dev-tools
+      - mercurial
+
+  - name: add ucsb apt key
+    apt_key: url=http://biodev.ece.ucsb.edu/debian/cbi_repository_key.asc state=present
+  - name: add ucsb apt repository
+    apt_repository: repo="deb http://biodev.ece.ucsb.edu/debian/archive unstable/" state=present
+  - name: install imgcnv
+    apt: name={{ item }} state=present update_cache=yes
+    with_items:
+      - imgcnv
+      - libimgcnv

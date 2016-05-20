@@ -1,0 +1,15 @@
+#!/bin/bash
+source {{ bisque_venv }}/bin/activate
+
+# edit servers? n
+# install uwsgi? y
+# send installation report? n
+bq-admin setup configuration<<EOF
+n
+y
+n
+EOF
+
+if [ $? = 0 ]; then
+  touch {{ bisque_db_flag }}
+fi

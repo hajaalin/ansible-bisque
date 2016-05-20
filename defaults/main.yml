@@ -1,0 +1,119 @@
+---
+  bisque_user: bisque
+
+  bisque_install_dir: /opt/Bisque
+  bisque_config: "{{ bisque_install_dir }}/config"
+  bisque_venv: "{{ bisque_install_dir }}/bqenv"
+  bisque_wrappers: "{{ bisque_install_dir }}/wrappers"
+  bisque_log_dir: "/var/log/bisque"
+  bisque_pid_dir: "/var/run/bisque"
+  bisque_data: "/data/bisque"
+
+  bisque_db_type: postgresql
+  bisque_db_host: localhost
+  bisque_db_port: 5432
+  bisque_db_name: bisque
+  bisque_db_user: bisque
+  bisque_db_password: secretpass
+  bisque_db_flag: "{{ bisque_install_dir }}/db_created.txt"
+
+  bisque_sqlalchemy_url: "{{ bisque_db_type }}://{{ bisque_db_user }}:{{ bisque_db_password }}@{{ bisque_db_host }}:{{ bisque_db_port }}/{{ bisque_db_name }}"
+
+  bisque_organization: "ORG"
+  bisque_title: "BioImage Repository"
+  bisque_admin_email: "admin@nowhere.com"
+  bisque_js_environment: "production"
+
+
+  bisque_site_servers: |
+    # Allow site admins to configure a number of parallel servers
+    # per machine.  Can be used with proxying server such as
+    # apache, haproxy, nginx etc..
+    # backend = paster
+    backend = uwsgi
+
+    # control which servers are active
+    #servers = h1,h2,h3,h4,e1
+    servers = h1
+    # Server definitions
+    # url = full url to proxy server
+    # services_enabled  = list of bisque_service to enable
+    # services_disabled = list of bisque_service to disable
+    # proxyroot =  the value of bisque.root for engines
+
+    h1.url = http://localhost:8080
+    h1.services_disabled = engine_service
+    # Extra params for uwsgi servers
+    # h1.uwsgi.socket = unix:///tmp/bisque.sock
+    # h1.uwsgi.threads = 8
+    # h1.uwsgi.master = true
+    # h1.uwsgi.processes = 4
+    # h1.bisque.static_files = false
+    # Example h1 with only image service, feature and helpers
+    #h1.services_enabled = blob_service, data_service, image_service, features
+
+    # You can define more than one host for paster when used with frontent proxy (haproxy)
+    # Not needed by uwsgi as it already run multiple background processes
+    #h2.url = http://localhost:9092
+    #h2.services_disabled = engine_service
+    #h3.url = http://localhost:9093
+    #h3.services_disabled = engine_service
+    #h4.url = http://localhost:9094
+    #h4.services_disabled = engine_service
+
+    # Engine on this host
+    # e1.url = http://localhost:27000
+    # e1.services_enabled = engine_service
+    # e1.bisque.has_database = false
+    # e1.bisque.static_files = false
+    # Extra params uwsgi
+    # e1.uwsgi.socket = unix:///tmp/engine.sock
+
+  bisque_blob_service: |
+    # Store paths all uploaded objects (into a store resource)
+    #bisque.blob_service.store_paths = true
+    # Use subtransactions for storing paths (must  be true ..   sqlite must use false but will fail)
+    bisque.blob_service.store_paths.subtransaction = true
+
+    # Ordered list of stores .. path is created based on template
+    # bisque.blob_service.stores = irods1,s3,local
+    bisque.blob_service.stores = local
+    bisque.stores.local.mounturl = file://$datadir/imagedir/$user/
+    bisque.stores.local.top = file://$datadir/imagedir/
+
+    # Example irods store
+    #bisque.stores.irods1.mounturl=irods://data.iplantcollaborative.org/iplant/home/$user/bisque_data/uploads/$date/$filebase.$filehash$fileext
+    #bisque.stores.irods1.credentials=bisque:<password>
+    #bisque.stores.irods1.readonly = true
+    # example S3
+    #bisque.stores.s3.path=s3://$user/
+    #bisque.stores.s3.credentials = <access_key>:<secret_key>
+    #bisque.stores.s3.bucket_id = None
+    #bisque.stores.s3.location = us-west
+
+  bisque_cluster_runtime: |
+    condor.enabled = False
+    condor.dag_template =
+    condor.submit_template =
+    condor.dag_config_template =
+    runtime.staging_base = "{{ bisque_data }}/staging"
+    runtime.matlab_home =
+    runtime.mode = command
+
+  bisque_image_service_upload_dir: "{{ bisque_data }}/uploads"
+  bisque_image_service_work_dir: "{{ bisque_data }}/workdir"
+
+  bisque_ldap_connection: ~
+  bisque_ldap_returned_id: "login"
+  bisque_ldap_base_dn: "ou=People,o=ucsb"
+  bisque_ldap_attributes: "uid,cn,sn,mail"
+  bisque_ldap_autoregister: "autoregister"
+
+  bisque_who_authenticators: |
+    [authenticators]
+    plugins =
+      sqlauth
+      #ldap_auth
+      mexauth
+      #cas_auth
+      #openid_auth

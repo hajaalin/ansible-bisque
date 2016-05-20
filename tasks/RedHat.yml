@@ -1,0 +1,37 @@
+---
+  - name: install the rpmfusion repo packages
+    yum: name={{ item }} state=present
+    with_items:
+      - http://download1.rpmfusion.org/free/el/updates/5/i386/rpmfusion-free-release-5-1.noarch.rpm
+      - http://download1.rpmfusion.org/nonfree/el/updates/5/i386/rpmfusion-nonfree-release-5-1.noarch.rpm
+
+  - name: install prerequisites
+    yum: name={{ item }} state=present
+    with_items:
+      - python-devel
+      - python-setuptools
+      - python-pip
+      - libxml2-devel
+      - libxslt-devel
+      - libxml2-python
+      - openldap-devel
+      - qt3-devel
+      - yasm
+      - bzip2-devel
+      - libtheora-devel
+      - schroedinger-devel
+      - openjpeg-devel
+      - xvidcore-devel
+      - gcc
+      - npm
+      - mercurial
+
+  - name: download psycopg package
+    get_url: url=http://initd.org/psycopg/tarballs/psycopg2-latest.tar.gz dest=/tmp/psycopg2-latest.tar.gz
+  - name: easy_install packages
+    easy_install: name={{ item }} state=present
+    with_items:
+      - numpy
+      - repoze.who.plugins.ldap
+      - /tmp/psycopg2-latest.tar.gz
+      - uwsgi

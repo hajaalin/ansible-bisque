@@ -1,0 +1,13 @@
+#!/bin/bash
+source {{ bisque_venv }}/bin/activate
+
+# install feature extractors? y
+# install source code for feature extractors? y
+# install OpenCV-2.4.6? y
+# send installation report? n
+bq-admin setup features<<EOF
+y
+y
+y
+n
+EOF

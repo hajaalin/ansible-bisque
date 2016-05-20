@@ -1,0 +1,13 @@
+#!/bin/bash
+source {{ bisque_venv }}/bin/activate
+
+# fetch external binaries? y
+# install BioFormats? y
+# install ImarisConvert? y
+# send installation report? n
+bq-admin setup binaries<<EOF
+y
+y
+y
+n
+EOF

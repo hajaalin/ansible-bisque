@@ -1,0 +1,104 @@
+---
+  #- include: tasks/{{ ansible_os_family }}.yml
+  - include: tasks/Debian.yml
+
+  - name: install virtualenv
+    pip: name=virtualenv state=present
+
+  # - name: install grunt for Nginx
+  #   npm: name=grunt global=yes state=present
+
+  - name: create group for Bisque
+    group: name={{ bisque_user }} state=present
+  - name: create user for Bisque
+    user: name={{ bisque_user }} group={{ bisque_user }} shell=/bin/bash state=present
+  - name: make sure installation directories exist
+    file: path={{ item }} state=directory owner={{ bisque_user }} group={{ bisque_user }}
+    with_items:
+      - "{{ bisque_install_dir }}"
+      - "{{ bisque_config }}"
+      - "{{ bisque_wrappers }}"
+      - "{{ bisque_log_dir }}"
+      - "{{ bisque_pid_dir }}"
+      - "{{ bisque_data }}"
+
+  - name: download bootstrap script
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    get_url: url=http://biodev.ece.ucsb.edu/binaries/download/bisque-bootstrap.py dest={{ bisque_install_dir }}
+  - name: run bootstrap script
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    command: python bisque-bootstrap.py bqenv
+    args:
+      chdir: "{{ bisque_install_dir }}"
+      creates: "{{ bisque_install_dir }}/bqenv/lib/python2.7/site-packages/tables-3.2.2.dist-info/RECORD"
+
+  - name: install python packages
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    pip:
+#      name: repoze.who.plugins.ldap
+      name: "{{ item }}"
+      state: present
+      virtualenv: "{{ bisque_venv }}"
+    with_items:
+      - https://launchpad.net/repoze.who.plugins.ldap/trunk/1.1a1/+download/repoze.who.plugins.ldap-1.1a1.tar.gz
+      - psycopg2
+      - numpy
+      - pandas
+    tags: new
+
+  # - name: clone imgcnv source
+  #   sudo: yes
+  #   sudo_user: "{{ bisque_user }}"
+  #   hg: repo=http://biodev.ece.ucsb.edu/hg/imgcnv dest={{ bisque_install_dir }}/imgcnv
+  # - name: compile imgcnv
+  #   sudo: yes
+  #   sudo_user: "{{ bisque_user }}"
+  #   shell: make -j 4 chdir={{ bisque_install_dir }}/imgcnv
+
+  - name: template wrapper scripts
+    template: src={{ item }}.j2 dest={{ bisque_wrappers }}/{{ item }}.sh mode=755 owner={{ bisque_user }} group={{ bisque_user }}
+    with_items:
+      - venv_exec
+      - bq-admin_setup_binaries
+      - bq-admin_setup_createdb
+      - bq-admin_setup_configuration
+    tags: config
+
+  - name: run paver script
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    command: "{{ bisque_wrappers }}/exec paver setup server"
+    args:
+      chdir: "{{ bisque_install_dir }}"
+      creates: "{{ bisque_install_dir }}/config/site.cfg"
+
+  - name: template config files
+    template: src={{ item }}.j2 dest="{{ bisque_install_dir }}/config/{{ item }}"
+    with_items:
+      - site.cfg
+      - who.ini
+    tags: config
+
+  - name: get external binaries
+    command: "{{ bisque_wrappers }}/bq-admin_setup_binaries.sh"
+    args:
+      creates: "{{ bisque_install_dir }}/external/ImarisConvert.tar.gz"
+
+  - name: create database
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    command: "{{ bisque_wrappers }}/bq-admin_setup_createdb.sh"
+    args:
+      chdir: "{{ bisque_install_dir }}"
+      creates: "{{ bisque_db_flag }}"
+
+  - name: create uwsgi configuration
+    sudo: yes
+    sudo_user: "{{ bisque_user }}"
+    command: "{{ bisque_wrappers }}/bq-admin_setup_configuration.sh"
+    args:
+      chdir: "{{ bisque_install_dir }}"
+    tags: config

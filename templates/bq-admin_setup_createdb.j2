@@ -1,0 +1,17 @@
+#!/bin/bash
+source {{ bisque_venv }}/bin/activate
+
+# a database uri?  (accept default)
+# create database? y
+# initialize database? y
+# send installation report? n
+bq-admin setup createdb<<EOF
+
+y
+y
+n
+EOF
+
+if [ $? = 0 ]; then
+  touch {{ bisque_db_flag }}
+fi

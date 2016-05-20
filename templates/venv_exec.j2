@@ -1,0 +1,5 @@
+#!/bin/bash
+source {{ bisque_venv }}/bin/activate
+echo VIRTUAL_ENV $VIRTUAL_ENV
+echo PYTHON `which python`
+$@
